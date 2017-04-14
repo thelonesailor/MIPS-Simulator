@@ -26,7 +26,7 @@ int iacc,dacc,numcycles,icache;
 int curr,st;
 int p11,p12,p21,p22,p3;
 int print;
-int core_id[6];
+int core_id[7];
   
 
 struct INST{

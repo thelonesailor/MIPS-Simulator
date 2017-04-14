@@ -444,7 +444,7 @@ void execute2()
    printf ("There are %d cores.\n", get_nprocs ());
 
 
-	int pc,flag=0;
+	int pc,flag=0,cflag=0;
 	//st=0;
 	curr=0;
 
@@ -536,17 +536,26 @@ void execute2()
 
 	//st=0;
 
+	if(find(curr)==1)
+	{cflag=0;}
+		
 	if(flag==0)
 	{
-  	
+  		
+  		if(cflag==0)
+  		{
 		//printf("Shell>>");
 		int code=yyparse();
 		if(code==100)//quit
 		{return;}
-		else if(code==50)
+		else if(code==50)//step
 		{/*printf("Step received\n");*/}
-		else if(code==150)
-		{flag=1;}	
+		else if(code==150)//run
+		{flag=1;}
+		else if(code==200)//continue
+		{cflag=1;}
+
+		}	
 	}
 
 		++curr;

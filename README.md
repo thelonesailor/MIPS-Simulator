@@ -7,6 +7,7 @@
 
 #---------Assumptions----------#
 1) Hexadecimal numbers can have 'b' and but not 'B'.
+
 2) If branch is the last instruction then 2 instruction penalty is counted if branch is taken,
 	because it will continue to read from instruction stream.
 3) Input instructions are hexadecimal numbers of length 8.
@@ -18,3 +19,19 @@
 #----------Commands----------#
 1) Use "step" to go to next cycle.
 2) Use "quit"/"exit" to end the program there, without any futher execution of hex program.
+
+
+stops at break point after executing instruction at that pc value.
+
+maximum number of instructions is ""----10^7----""
+
+Assumptions: 
+
+"sim.y"
+input_hexin(in calloc of ins and ins_string)
+print_memdump(in else if)
+initialse(in ;i<74000005;)
+
+"sim.h"
+in char mem[..];
+

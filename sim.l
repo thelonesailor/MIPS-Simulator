@@ -15,8 +15,14 @@ hex [0-9A-F]+
 [ \t]+			{/*printf("Consuming space - \"%s\"\n",yytext);*/}
 <INITIAL>"memdump"		{  /*printf("Intial = \"%s\"\n",yytext);*/BEGIN TEMP; return MEMDUMP;}
 <INITIAL>"regdump"		 {  /*printf("Intial = \"%s\"\n",yytext);*/BEGIN EXPECTINGEND; return REGDUMP;}
-<INITIAL>"run"		 {  /*printf("Intial = \"%s\"\n",yytext);*/BEGIN EXPECTINGEND; return GOTOEND;}
 <INITIAL>"step"		 {  /*printf("Intial = \"%s\"\n",yytext);*/BEGIN EXPECTINGEND;/*printf("2\n");*/ return STEP;}
+
+<INITIAL>"continue"		 {  /*printf("Intial = \"%s\"\n",yytext);*/BEGIN EXPECTINGEND; return CONTINUE;}
+<INITIAL>"run"		 {  /*printf("Intial = \"%s\"\n",yytext);*/BEGIN EXPECTINGEND; return RUN;}
+<INITIAL>"break"		 {  /*printf("Intial = \"%s\"\n",yytext);*/BEGIN valuetemp; return BREAK;}
+<INITIAL>"delete"		 {  /*printf("Intial = \"%s\"\n",yytext);*/BEGIN valuetemp; return DELETE;}
+
+
 <INITIAL>("quit"|"QUIT"|"exit"|"EXIT")	{  /*printf("Intial = \"%s\"\n",yytext);*/BEGIN EXPECTINGEND;/*printf("2\n");*/ return QUIT;}
 <TEMP>("0x"|"0X")  { /*printf("Consumed - \"%s\"\n",yytext);*/BEGIN TERMINAL1; }
 <TEMP>[0-9]+	  { yylval.addr=atoi(yytext); /*printf("TEMP = \"%s\"\n",yytext);*/BEGIN valuetemp;/*printf("4\n");*/ return ADDR;}

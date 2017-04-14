@@ -1,5 +1,5 @@
 %{
-#include "sim.h"
+#include "cache.h"
 
     
 extern FILE *yyin;
@@ -12,7 +12,8 @@ int yylex();
 %token <addr> ADDR 
 %token <num> NUM
 %token er END 
-%token STEP QUIT GOTOEND
+%token STEP QUIT 
+%token CONTINUE RUN BREAK DELETE
 %start Input
 %%
 
@@ -25,19 +26,30 @@ Line: END	      {/*printf("Got only end\n");*/}
 ;
 
 Expression:
-  REGDUMP END               {print_regdump();/*printf("Shell>>");*/}
-| MEMDUMP ADDR NUM END      {print_memdump($2,$3);/*printf("Shell>>");*/}
+  REGDUMP END               {print_regdump();}
+| MEMDUMP ADDR NUM END      {print_memdump($2,$3);}
 | STEP END                  {return 50;}        
 | QUIT END                  {return 100;}
-| GOTOEND END               {return 150;}
+
+| RUN END                   {return 150;}
+| CONTINUE END              {return 200;}
+| BREAK NUM END             {Add_Break($2);}
+| DELETE NUM END            {Delete_Break($2);}
+
 ;
 
-| REGDUMP er {}
-| MEMDUMP ADDR NUM er {}
-| MEMDUMP ADDR er {}
-| MEMDUMP er {}
-| STEP er {}
-| er {/*printf("Got and error\n");*/}
+| REGDUMP er                {}
+| MEMDUMP ADDR NUM er       {}
+| MEMDUMP ADDR er           {}
+| MEMDUMP er                {}
+| STEP er                   {}
+| CONTINUE er               {}
+| RUN er                    {}
+| BREAK NUM er              {}
+| DELETE NUM er             {}
+| BREAK er                  {}
+| DELETE er                 {}
+| er {}
 ;
 
 %%                    
@@ -46,6 +58,7 @@ void initialise()
 {
     iacc=dacc=numins=numcycles=icache=0;
     
+
     int i=0;
     for(i=0;i<34;++i)
     {reg[i]=0;}
@@ -63,6 +76,8 @@ void initialise()
     ma[0].Ins.type=0;
     ma[1].Ins.type=0;
 
+    isbreak=(int *)calloc((1e7+55),sizeof(int));
+    
 }
 
 void print_regdump()
@@ -80,7 +95,7 @@ void print_memdump(int addr,int num)
 {
     if(addr<0x10010000)
     {fprintf(stderr,"Error - Address given is out of range\n");}
-    else if(addr>0x10010000+64000000)
+    else if(addr>0x10010000+67108864)
     {fprintf(stderr,"Error - Address given is out of range\n");}
     else 
     {
@@ -251,10 +266,11 @@ int main(int argc, char* argv[])
     do {
         //printf("Shell>>");
         int temp=yyparse();
-        if(temp==100)
+        if(temp==100)//quit
         {break;}
-        else if(temp==50)
-        {break;}
+        else if(temp==50 || temp==150 || temp==200)//step,run,continue
+        {printf("Simulation has already finished!\t enter quit to exit\n");}
+
     } while (!feof(yyin));
     
 
@@ -268,8 +284,7 @@ int main(int argc, char* argv[])
     }
     //printf("%d\n",printres);
 
-    
-    
+       
     return 0;
 }
 
