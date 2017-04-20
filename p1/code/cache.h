@@ -1,8 +1,12 @@
+#ifndef CACHE_H
+#define CACHE_H
 
-/*
- * cache.h
- */
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+#include <stdbool.h>
+#include <string.h>
 
 #define TRUE 1
 #define FALSE 0
@@ -58,6 +62,21 @@ typedef struct cache_stat_ {
 } cache_stat, *Pcache_stat;
 
 
+char** c;
+int** tag;
+bool** v;
+bool** dirty;
+int** lru;
+int tagbits[2],indexbits[2],blockbits[2];//number of bits for tag,index,block offset.
+int numsets[2],setsize[2];
+
+
+int numiref,numdref;
+int numimiss,numdmiss;
+int curr[2];
+int numireplace,numdreplace;
+int demand_fetches[2],copies_back[2];
+
 /* function prototypes */
 void set_cache_param();
 void init_cache();
@@ -72,3 +91,5 @@ void print_stats();
 /* macros */
 #define LOG2(x) ((int) rint((log((double) (x))) / (log(2.0))))
 
+
+#endif

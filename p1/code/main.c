@@ -1,15 +1,11 @@
 
-/*
- * main.c
- */
-
 
 #include <stdlib.h>
 #include <stdio.h>
 #include "cache.h"
 #include "main.h"
 
-static FILE *traceFile;
+FILE *traceFile;
 
 
 int main(argc, argv)
@@ -17,8 +13,11 @@ int main(argc, argv)
   char **argv;
 {
   parse_args(argc, argv);
+  // printf("1\n");fflush(stdout);
   init_cache();
+  // printf("2\n");fflush(stdout);
   play_trace(traceFile);
+  // printf("3\n");fflush(stdout);  
   print_stats();
 }
 
@@ -32,7 +31,7 @@ void parse_args(argc, argv)
 
   if (argc < 2) {
     printf("Error - usage:  sim <options> <trace file>\n");
-    exit(-1);
+    //exit(-1);
   }
 
   /* parse the command line arguments */
@@ -124,6 +123,12 @@ void parse_args(argc, argv)
 
   /* open the trace file */
   traceFile = fopen(argv[arg_index], "r");
+  // traceFile = fopen("traces/spice.trace", "r");
+  if(traceFile==NULL)
+  {
+      fprintf(stderr,"Error - traceFile is NULL \"%s\"\n",argv[arg_index]);
+      fflush(stderr);
+  }
 
   return;
 }
@@ -133,10 +138,23 @@ void parse_args(argc, argv)
 void play_trace(inFile)
   FILE *inFile;
   {
-  unsigned addr, data, access_type;
+  unsigned addr, access_type;
   int num_inst;
 
   num_inst = 0;
+
+  if(inFile==NULL)
+  {
+      fprintf(stderr,"Error - inFile is NULL\n");
+      fflush(stderr);
+
+        if(traceFile==NULL)
+  {
+      fprintf(stderr,"Error - traceFile is NULL\n");
+      fflush(stderr);
+  }
+  }
+
   while(read_trace_element(inFile, &access_type, &addr)) {
 
     switch (access_type) {

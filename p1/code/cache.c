@@ -1,11 +1,3 @@
-/*
- * cache.c
- */
-
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
 
 #include "cache.h"
 #include "main.h"
@@ -22,10 +14,10 @@ static int cache_writeback = DEFAULT_CACHE_WRITEBACK;
 static int cache_writealloc = DEFAULT_CACHE_WRITEALLOC;
 
 /* cache model data structures */
-static Pcache icache;
-static Pcache dcache;
-static cache c1;
-static cache c2;
+// static Pcache icache;
+// static Pcache dcache;
+// static cache c1;
+// static cache c2;
 static cache_stat cache_stat_inst;
 static cache_stat cache_stat_data;
 
@@ -76,36 +68,57 @@ void set_cache_param(param, value)
 /************************************************************/
 
 /************************************************************/
-char* c;
-int* tag;
-bool* v;
-bool* dirty;
-int blockbits,indexbits,tagbits;
-int sets,setsize;
+
+void init_vars()
+{
+
+  c=(char**)calloc((2),sizeof(char*));
+  tag=(int**)calloc((2),sizeof(int*));
+  lru=(int**)calloc((2),sizeof(int*));
+  v=(bool**)calloc((2),sizeof(bool*));
+  dirty=(bool**)calloc((2),sizeof(bool*));
+
+  c[0]=(char*)calloc((cache_usize+10),sizeof(char));
+  c[1]=(char*)calloc((cache_usize+10),sizeof(char));
+  tag[0]=(int*)calloc((cache_usize+10),sizeof(int));
+  tag[1]=(int*)calloc((cache_usize+10),sizeof(int));
+  lru[0]=(int*)calloc((cache_usize+10),sizeof(int));
+  lru[1]=(int*)calloc((cache_usize+10),sizeof(int));
+  v[0]=(bool*)calloc((cache_usize+10),sizeof(bool));
+  v[1]=(bool*)calloc((cache_usize+10),sizeof(bool));
+  dirty[0]=(bool*)calloc((cache_usize+10),sizeof(bool));
+  dirty[1]=(bool*)calloc((cache_usize+10),sizeof(bool));
+
+
+  numiref=numdref=0;
+  numimiss=numdmiss=0;
+  numireplace=numdreplace=0;
+  demand_fetches[0]=copies_back[0]=0;
+  demand_fetches[1]=copies_back[1]=0;
+
+  curr[0]=curr[1]=1;
+
+}
 
 void init_cache()
 {
-
-  /* initialize the cache, and cache statistics data structures */
-  c=(char*)calloc((cache_usize+10),sizeof(char));
-  tag=(int*)calloc((cache_usize+10),sizeof(int));//(in worst case possible)
-  v=(bool*)calloc((cache_usize+10),sizeof(bool));
-
-  //(v,false,sizeof(v));
+  init_vars();
 
   if( cache_usize % (cache_assoc*cache_block_size)!=0)
   {
     fprintf(stderr,"Error - cache_size is not divisible by assocciativity*block_size\n");
-    fflush();exit(-1);
+    fflush(stderr);exit(-1);
   }
 
-  blockbits=LOG2(cache_block_size);//check for non power of 2
+  blockbits[0]=LOG2(cache_block_size);
 
-  setsize=cache_assoc*cache_block_size;
-  sets=cache_usize/(setsize);
+  setsize[0]=cache_assoc*cache_block_size;
+  numsets[0]=cache_usize/(setsize[0]);
   
-  indexbits=LOG2(sets);
-  tagbits=32-(blockbits+indexbits);
+  indexbits[0]=LOG2(numsets[0]);
+  tagbits[0]=32-(blockbits[0]+indexbits[0]);
+
+  // printf("%d %d %d \n",tagbits[0],indexbits[0],blockbits[0]);
 }
 /************************************************************/
 
@@ -113,57 +126,144 @@ void init_cache()
 void perform_access(addr, access_type)
   unsigned addr, access_type;
 {
-  /* handle an access to the cache */
 
-  //unsigned 32 bit address
-  unsigned index,bo,atag;
+  ++curr[0];
 
-  unsigned t1=(addr<<tagbits);
-  t1=(t1>>(tagbits+blockbits));
-  index=t1;
+  // printf("5\n");fflush(stdout);  
 
-  unsigned t2=(addr<<(tagbits+indexbits));
-  t2=(t2>>(tagbits+indexbits));
-  bo=t2;
+  unsigned t1=(addr<<tagbits[0]);
+  t1=(t1>>(tagbits[0]+blockbits[0]));
+  unsigned index=t1;
 
-  atag=(addr>>(indexbits+blockbits));
+  // printf("6\n");fflush(stdout);  
 
-  unsigned i=0,end=(index+2)*setsize,hit=0;
+  unsigned t2=(addr<<(tagbits[0]+indexbits[0]));
+  t2=(t2>>(tagbits[0]+indexbits[0]));
+  unsigned bo=t2;
+
+  // printf("7\n");fflush(stdout);  
+
+  unsigned atag=(addr>>(indexbits[0]+blockbits[0]));
+
+
+  unsigned i=0,end=(index+2)*setsize[0],hit=0;
   
+
+  if(access_type==0 || access_type==1)
+  {++numdref;}
+  else if(access_type==2)
+  {++numiref;}
+
+  // printf("3\n");fflush(stdout);  
+
   // v[i] and tag[i] are valid only for i which are multiples of cache_block_size 
-  for(i=(index+1)*setsize;i<end;i+=cache_block_size)
+  for(i=(index+1)*setsize[0] ; i<end ; i+=cache_block_size)
   {
-    if(v[i]==true && tag[i]==atag)//hit
+    if(v[0][i]==true && tag[0][i]==atag)//hit
     {
-      if(access_type==0 || access_type==2)// rd hit
+      hit=1;
+      
+      if(access_type==0)// d rd hit
       {
         //read from [i+bo]
       }
-      else if(access_type==1)// wr hit 
+      else if(access_type==1)// d wr hit 
       {
         //write in c[i+bo]
-        if(cache_writeback=1)
-        {dirty[i]=true;}
+        //if(cache_writeback==1)
+        {dirty[0][i]=true;}
 
       }
-    hit=1;
+      else if(access_type==2)// i rd hit 
+      {
+        //read from [i+bo]
+        int mem=c[0][i+bo];
+        mem=mem+1;
+
+      }
+
+        break;//have found the memory location
     }
   }
 
   if(hit==0)//miss
   {
-      if(access_type==0 || access_type==2)// rd miss
+
+    //choose which block to remove
+    unsigned minlru=curr[0]+10,mini=0;
+    for(i=(index+1)*setsize[0] ; i<end ; i+=cache_block_size)
+    {
+      if(lru[0][i]<minlru)
+      {minlru=lru[0][i];mini=i;}
+    }
+
+    //write to main memory the block from [mini] to [mini+cache_block_size-1]        
+    {
+      if(dirty[0][mini]==true)
       {
-        //write
-        //read from [i+bo]
-      }
-      else if(access_type==1)// wr miss 
-      {
-        //write in c[i+bo]
-        if(cache_writeback=1)
-        {dirty[i]=true;}
+        //block has to be written to MM
+        if(access_type==0 || access_type==1)
+        {++numdreplace;
+        copies_back[1]+=cache_block_size;}
+        else if(access_type==2)
+        {++numireplace;
+        copies_back[0]+=cache_block_size;}     
+
+        for(i=mini ; i<(mini+cache_block_size) ; ++i)
+        {
+          //mem=
+        } 
 
       }
+
+    }
+
+    //write the block to cache from main memory
+    {
+      for(i=mini ; i<(mini+cache_block_size) ; ++i)
+      {c[0][i]=1;/*from memory*/
+
+      tag[0][i]=atag;
+      v[0][i]=true;
+      dirty[0][i]=true;
+      lru[0][i]=curr[0];}
+
+      if(access_type==0 || access_type==1)
+      {demand_fetches[1]+=cache_block_size;}
+      else if(access_type==2)
+      {demand_fetches[0]+=cache_block_size;}
+
+    }
+
+
+      if(access_type==0)// d rd miss
+      {
+
+        //read from [mini+bo]
+        ++numdmiss;
+        v[0][mini]=true;
+
+      }
+      else if(access_type==1)// d wr miss 
+      {
+
+        //if(cache_writeback==1)
+        {dirty[0][mini]=true;}
+        
+        v[0][mini]=true;
+        //write to cache at [mini+bo]
+        
+        ++numdmiss;
+      }
+      else if(access_type==2)// i rd miss
+      {
+
+        //read from [mini+bo]
+        ++numimiss;
+        v[0][mini]=true;
+
+      }
+
 
 
   }
@@ -185,21 +285,21 @@ void flush()
 void delete(head, tail, item)
   Pcache_line *head, *tail;
   Pcache_line item;
-{
-  if (item->LRU_prev) {
-    item->LRU_prev->LRU_next = item->LRU_next;
-  } else {
-    /* item at head */
-    *head = item->LRU_next;
-  }
+  {
+    if (item->LRU_prev) {
+      item->LRU_prev->LRU_next = item->LRU_next;
+    } else {
+      /* item at head */
+      *head = item->LRU_next;
+    }
 
-  if (item->LRU_next) {
-    item->LRU_next->LRU_prev = item->LRU_prev;
-  } else {
-    /* item at tail */
-    *tail = item->LRU_prev;
+    if (item->LRU_next) {
+      item->LRU_next->LRU_prev = item->LRU_prev;
+    } else {
+      /* item at tail */
+      *tail = item->LRU_prev;
+    }
   }
-}
 /************************************************************/
 
 /************************************************************/
@@ -207,17 +307,17 @@ void delete(head, tail, item)
 void insert(head, tail, item)
   Pcache_line *head, *tail;
   Pcache_line item;
-{
-  item->LRU_next = *head;
-  item->LRU_prev = (Pcache_line)NULL;
+  {
+    item->LRU_next = *head;
+    item->LRU_prev = (Pcache_line)NULL;
 
-  if (item->LRU_next)
-    item->LRU_next->LRU_prev = item;
-  else
-    *tail = item;
+    if (item->LRU_next)
+      item->LRU_next->LRU_prev = item;
+    else
+      *tail = item;
 
-  *head = item;
-}
+    *head = item;
+  }
 /************************************************************/
 
 /************************************************************/
@@ -238,12 +338,22 @@ void dump_settings()
 	 cache_writeback ? "WRITE BACK" : "WRITE THROUGH");
   printf("  Allocation policy: \t%s\n",
 	 cache_writealloc ? "WRITE ALLOCATE" : "WRITE NO ALLOCATE");
+  fflush(stdout);
 }
 /************************************************************/
 
 /************************************************************/
 void print_stats()
   {
+
+  cache_stat_inst.accesses=numiref;
+  cache_stat_inst.misses=numimiss;
+  cache_stat_inst.replacements=numireplace;
+
+  cache_stat_data.accesses=numdref;
+  cache_stat_data.misses=numdmiss;
+  cache_stat_data.replacements=numdreplace;
+
   printf("\n*** CACHE STATISTICS ***\n");
 
   printf(" INSTRUCTIONS\n");
@@ -267,6 +377,16 @@ void print_stats()
 	 (float)cache_stat_data.misses / (float)cache_stat_data.accesses,
 	 1.0 - (float)cache_stat_data.misses / (float)cache_stat_data.accesses);
   printf("  replace:   %d\n", cache_stat_data.replacements);
+
+
+  cache_stat_inst.demand_fetches=demand_fetches[0]/32;
+  cache_stat_inst.copies_back=copies_back[0]/32;
+
+  cache_stat_data.demand_fetches=demand_fetches[1]/32;
+  cache_stat_data.copies_back=copies_back[1]/32;
+
+  // cache_stat_data.demand_fetches/=8;
+  // cache_stat_data.copies_back/=8;
 
   printf(" TRAFFIC (in words)\n");
   printf("  demand fetch:  %d\n", cache_stat_inst.demand_fetches + 

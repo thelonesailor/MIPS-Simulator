@@ -1,7 +1,5 @@
-
-/*
- * main.h
- */
+#ifndef MAIN_H
+#define MAIN_H
 
 
 #define TRACE_DATA_LOAD 0
@@ -14,3 +12,4 @@ void parse_args();
 void play_trace();
 int read_trace_element();
 
+#endif
