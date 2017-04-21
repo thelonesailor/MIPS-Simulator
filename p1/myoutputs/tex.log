@@ -13,20 +13,18 @@ processed 500000 references
 processed 600000 references
 processed 700000 references
 processed 800000 references
-processed 900000 references
-processed 1000000 references
 
 *** CACHE STATISTICS ***
  INSTRUCTIONS
-  accesses:  782764
-  misses:    36136
-  miss rate: 0.0462 (hit rate 0.9538)
-  replace:   35787
+  accesses:  597309
+  misses:    969
+  miss rate: 0.0016 (hit rate 0.9984)
+  replace:   947
  DATA
-  accesses:  217237
-  misses:    21261
-  miss rate: 0.0979 (hit rate 0.9021)
-  replace:   21098
+  accesses:  235168
+  misses:    4380
+  miss rate: 0.0186 (hit rate 0.9814)
+  replace:   3890
  TRAFFIC (in words)
-  demand fetch:  229588
-  copies back:   37844
+  demand fetch:  21396
+  copies back:   9968

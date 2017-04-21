@@ -154,7 +154,6 @@ void perform_access(addr, access_type)
   else if(access_type==2)
   {++numiref;}
 
-  // printf("3\n");fflush(stdout);  
 
   // v[i] and tag[i] are valid only for i which are multiples of cache_block_size 
   for(i=(index+1)*setsize[0] ; i<end ; i+=cache_block_size)
@@ -197,17 +196,28 @@ void perform_access(addr, access_type)
       {minlru=lru[0][i];mini=i;}
     }
 
+      if(v[0][mini]==true)
+      {    
+
+        if(access_type==0 || access_type==1)
+        {++numdreplace;}
+        else if(access_type==2)
+        {++numireplace;}     
+      }  
+
     //write to main memory the block from [mini] to [mini+cache_block_size-1]        
     {
       if(dirty[0][mini]==true)
       {
         //block has to be written to MM
+
+
+
         if(access_type==0 || access_type==1)
-        {++numdreplace;
-        copies_back[1]+=cache_block_size;}
+        {copies_back[1]+=words_per_block;}
         else if(access_type==2)
-        {++numireplace;
-        copies_back[0]+=cache_block_size;}     
+        {copies_back[0]+=words_per_block;}     
+
 
         for(i=mini ; i<(mini+cache_block_size) ; ++i)
         {
@@ -225,13 +235,13 @@ void perform_access(addr, access_type)
 
       tag[0][i]=atag;
       v[0][i]=true;
-      dirty[0][i]=true;
+//      dirty[0][i]=true;
       lru[0][i]=curr[0];}
 
       if(access_type==0 || access_type==1)
-      {demand_fetches[1]+=cache_block_size;}
+      {demand_fetches[1]+=words_per_block;}
       else if(access_type==2)
-      {demand_fetches[0]+=cache_block_size;}
+      {demand_fetches[0]+=words_per_block;}
 
     }
 
@@ -241,6 +251,8 @@ void perform_access(addr, access_type)
 
         //read from [mini+bo]
         ++numdmiss;
+        dirty[0][mini]=false;
+
         v[0][mini]=true;
 
       }
@@ -260,6 +272,8 @@ void perform_access(addr, access_type)
 
         //read from [mini+bo]
         ++numimiss;
+        dirty[0][mini]=false;
+
         v[0][mini]=true;
 
       }
@@ -275,8 +289,21 @@ void perform_access(addr, access_type)
 /************************************************************/
 void flush()
 {
+  unsigned i=0,end=(numsets[0])*setsize[0];
 
-  /* flush the cache */
+    for(i=0 ; i<end ; i+=cache_block_size)
+    {
+      if(dirty[0][i]==true)
+      {
+        unsigned j=i;
+        for(j=i ; j<(i+cache_block_size) ; ++j)
+        {
+          //mem[...]=c[j]
+        }
+
+        copies_back[0]+=words_per_block;
+      }
+    }
 
 }
 /************************************************************/
@@ -379,14 +406,14 @@ void print_stats()
   printf("  replace:   %d\n", cache_stat_data.replacements);
 
 
-  cache_stat_inst.demand_fetches=demand_fetches[0]/32;
-  cache_stat_inst.copies_back=copies_back[0]/32;
+  cache_stat_inst.demand_fetches=demand_fetches[0];
+  cache_stat_inst.copies_back=copies_back[0];
 
-  cache_stat_data.demand_fetches=demand_fetches[1]/32;
-  cache_stat_data.copies_back=copies_back[1]/32;
+  cache_stat_data.demand_fetches=demand_fetches[1];
+  cache_stat_data.copies_back=copies_back[1];
 
-  // cache_stat_data.demand_fetches/=8;
-  // cache_stat_data.copies_back/=8;
+  // cache_stat_data.demand_fetches/=32;
+  // cache_stat_data.copies_back/=32;
 
   printf(" TRAFFIC (in words)\n");
   printf("  demand fetch:  %d\n", cache_stat_inst.demand_fetches + 

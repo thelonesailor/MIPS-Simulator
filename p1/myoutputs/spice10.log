@@ -18,5 +18,5 @@
   miss rate: 1.0000 (hit rate 0.0000)
   replace:   0
  TRAFFIC (in words)
-  demand fetch:  2
+  demand fetch:  20
   copies back:   0

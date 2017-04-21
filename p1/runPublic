@@ -10,3 +10,6 @@ code/sim -bs 16 -us 8192 -a 1 -wb -wa traces/spice100.trace > myoutputs/spice100
 code/sim -bs 16 -us 8192 -a 1 -wb -wa traces/spice1000.trace > myoutputs/spice1000.log
 
 code/sim -bs 16 -us 8192 -a 1 -wb -wa traces/spice.trace > myoutputs/spice.log
+code/sim -bs 16 -us 8192 -a 1 -wb -wa traces/tex.trace > myoutputs/tex.log
+code/sim -bs 16 -us 8192 -a 1 -wb -wa traces/cc.trace > myoutputs/cc1.log
+
