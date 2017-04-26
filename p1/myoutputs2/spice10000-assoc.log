@@ -31,17 +31,17 @@
 *** CACHE STATISTICS ***
  INSTRUCTIONS
   accesses:  6920
-  misses:    676
-  miss rate: 0.0977 (hit rate 0.9023)
-  replace:   665
+  misses:    656
+  miss rate: 0.0948 (hit rate 0.9052)
+  replace:   645
  DATA
   accesses:  3080
-  misses:    1053
-  miss rate: 0.3419 (hit rate 0.6581)
-  replace:   1048
+  misses:    1045
+  miss rate: 0.3393 (hit rate 0.6607)
+  replace:   1040
  TRAFFIC (in words)
-  demand fetch:  6916
-  copies back:   416
+  demand fetch:  6804
+  copies back:   368
 *** CACHE SETTINGS ***
   Unified I- D-cache
   Size: 	256
@@ -53,17 +53,17 @@
 *** CACHE STATISTICS ***
  INSTRUCTIONS
   accesses:  6920
-  misses:    489
-  miss rate: 0.0707 (hit rate 0.9293)
-  replace:   480
+  misses:    420
+  miss rate: 0.0607 (hit rate 0.9393)
+  replace:   411
  DATA
   accesses:  3080
-  misses:    575
-  miss rate: 0.1867 (hit rate 0.8133)
-  replace:   568
+  misses:    634
+  miss rate: 0.2058 (hit rate 0.7942)
+  replace:   627
  TRAFFIC (in words)
-  demand fetch:  4256
-  copies back:   276
+  demand fetch:  4216
+  copies back:   116
 *** CACHE SETTINGS ***
   Unified I- D-cache
   Size: 	256
@@ -75,17 +75,17 @@
 *** CACHE STATISTICS ***
  INSTRUCTIONS
   accesses:  6920
-  misses:    431
-  miss rate: 0.0623 (hit rate 0.9377)
-  replace:   422
+  misses:    309
+  miss rate: 0.0447 (hit rate 0.9553)
+  replace:   300
  DATA
   accesses:  3080
-  misses:    495
-  miss rate: 0.1607 (hit rate 0.8393)
-  replace:   488
+  misses:    321
+  miss rate: 0.1042 (hit rate 0.8958)
+  replace:   314
  TRAFFIC (in words)
-  demand fetch:  3704
-  copies back:   372
+  demand fetch:  2520
+  copies back:   116
 *** CACHE SETTINGS ***
   Unified I- D-cache
   Size: 	8192

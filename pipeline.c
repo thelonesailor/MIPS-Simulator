@@ -1,4 +1,5 @@
 #include "sim.h"
+#include "cache.h"
 #include <pthread.h>
 
 const int base_pc=0x00400000;

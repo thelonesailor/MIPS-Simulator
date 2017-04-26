@@ -35,3 +35,7 @@ initialse(in ;i<74000005;)
 "sim.h"
 in char mem[..];
 
+
+remember to use fghz for frequency in GHz.
+
+remember to add latency to cycle count.

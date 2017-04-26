@@ -98,4 +98,9 @@ void execute();
 void execute2();
 
 
+int* isbreak;
+void Add_Break(int pc);
+void Delete_Break(int pc);
+int find(int currr);
+
 #endif

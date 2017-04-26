@@ -95,7 +95,6 @@ unsigned atag;
 unsigned end;
 
 
-char read_data,write_data;
 
 /* function prototypes */
 void set_default();
@@ -109,6 +108,18 @@ void insert();
 void dump_settings();
 void print_stats();
 
+
+void write_to_cache(int u,int idx);
+void read_from_cache(int u,int idx);
+void write_to_MM(unsigned addr);
+void read_from_MM(unsigned addr);
+void block_write(int u,int mini);
+void block_read(int u,int mini);
+
+
+char* MMi;
+char* MMd;
+char read_data,write_data;
 
 /* macros */
 #define LOG2(x) ((int) rint((log((double) (x))) / (log(2.0))))

@@ -1,5 +1,6 @@
 %{
 #include "cache.h"
+#include "sim.h"
 
     
 extern FILE *yyin;
@@ -77,6 +78,8 @@ void initialise()
     ma[1].Ins.type=0;
 
     isbreak=(int *)calloc((1e7+55),sizeof(int));
+
+
     
 }
 
@@ -173,12 +176,6 @@ void test_hexin()
     }
 }
 
-void test()
-{
-    char ch=-3;
-    int a=(int)ch;
-    printf("ch=%d  a=%d\n",ch,a);
-}
 
 int main(int argc, char* argv[])
 {
@@ -187,7 +184,7 @@ int main(int argc, char* argv[])
 
     //test();
 
-    if(argc == 3)
+    if(argc == 4)
     {
         hexin=fopen(argv[1],"r");
         if (hexin == NULL) {
@@ -205,7 +202,7 @@ int main(int argc, char* argv[])
 
         printres=0;
     }
-    else if(argc == 4)
+    else if(argc == 5)
     {
         hexin=fopen(argv[1],"r");
         if (hexin == NULL) {
@@ -250,7 +247,14 @@ int main(int argc, char* argv[])
     if (resout == NULL) {
     fprintf(stderr,"Error - Output result file \"%s\" not found\n","");
     exit(-1);
-    }*/
+    }
+    resout=fopen("results6.txt","w");
+    if (resout == NULL) {
+    fprintf(stderr,"Error - Output result file \"%s\" not found\n","");
+    exit(-1);
+    }
+
+    */
 
     yyin = stdin;
     if (yyin == NULL) {
@@ -258,9 +262,18 @@ int main(int argc, char* argv[])
         exit(-2);
     }
 
+    //these have to be called only once
+    set_default();
+    input_cfg();
 
-   //printf("sim\n");
+    init_vars();//allocate space
+    init_cache();
+    //don't change the order
+
+
+
     simulate();
+
     
     //change to keep parsing multiple times because we just want to ignore the wrong line
     do {
@@ -269,7 +282,7 @@ int main(int argc, char* argv[])
         if(temp==100)//quit
         {break;}
         else if(temp==50 || temp==150 || temp==200)//step,run,continue
-        {printf("Simulation has already finished!\t enter quit to exit\n");}
+        {printf("Simulation has already finished!\t enter \"quit\" to exit\n");}
 
     } while (!feof(yyin));
     

@@ -10,14 +10,14 @@ int arg_index;
 int main(int argc,char ** argv)
 {
 
-  //these have to be called only once
+    //these have to be called only once
     set_default();
     parse_args(argc, argv);
-    
+
     init_vars();//allocate space
     init_cache();
-  //don't change the order
-      
+    //don't change the order
+    
   
   if(cache_split==0)//unified cache  
   {
