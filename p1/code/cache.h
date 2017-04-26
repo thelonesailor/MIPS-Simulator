@@ -95,6 +95,8 @@ unsigned atag;
 unsigned end;
 
 
+char read_data,write_data;
+
 /* function prototypes */
 void set_default();
 void set_cache_param(int param,int value);

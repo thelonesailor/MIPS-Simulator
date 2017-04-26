@@ -16,6 +16,7 @@ int main(int argc,char ** argv)
     
     init_vars();//allocate space
     init_cache();
+  //don't change the order
       
   
   if(cache_split==0)//unified cache  
