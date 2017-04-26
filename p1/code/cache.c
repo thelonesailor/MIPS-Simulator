@@ -3,15 +3,15 @@
 #include "main.h"
 
 /* cache configuration parameters */
-static int cache_split = 0;
-static int cache_usize = DEFAULT_CACHE_SIZE;
-static int cache_isize = DEFAULT_CACHE_SIZE; 
-static int cache_dsize = DEFAULT_CACHE_SIZE;
-static int cache_block_size = DEFAULT_CACHE_BLOCK_SIZE;
-static int words_per_block = DEFAULT_CACHE_BLOCK_SIZE / WORD_SIZE;
-static int cache_assoc = DEFAULT_CACHE_ASSOC;
-static int cache_writeback = DEFAULT_CACHE_WRITEBACK;
-static int cache_writealloc = DEFAULT_CACHE_WRITEALLOC;
+int cache_split = 0;
+int cache_usize = DEFAULT_CACHE_SIZE;
+int cache_isize = DEFAULT_CACHE_SIZE; 
+int cache_dsize = DEFAULT_CACHE_SIZE;
+int cache_block_size = DEFAULT_CACHE_BLOCK_SIZE;
+int words_per_block = DEFAULT_CACHE_BLOCK_SIZE / WORD_SIZE;
+int cache_assoc = DEFAULT_CACHE_ASSOC;
+int cache_writeback = DEFAULT_CACHE_WRITEBACK;
+int cache_writealloc = DEFAULT_CACHE_WRITEALLOC;
 
 /* cache model data structures */
 // static Pcache icache;
@@ -22,9 +22,7 @@ static cache_stat cache_stat_inst;
 static cache_stat cache_stat_data;
 
 /************************************************************/
-void set_cache_param(param, value)
-  int param;
-  int value;
+void set_cache_param(int param,int value)
 {
 
   switch (param) {
@@ -69,8 +67,24 @@ void set_cache_param(param, value)
 
 /************************************************************/
 
+//called only once
+void set_default()
+{
+	cache_split = 0;
+	cache_usize = DEFAULT_CACHE_SIZE;
+	cache_isize = DEFAULT_CACHE_SIZE; 
+	cache_dsize = DEFAULT_CACHE_SIZE;
+	cache_block_size = DEFAULT_CACHE_BLOCK_SIZE;
+	words_per_block = DEFAULT_CACHE_BLOCK_SIZE / WORD_SIZE;
+	cache_assoc = DEFAULT_CACHE_ASSOC;
+	cache_writeback = DEFAULT_CACHE_WRITEBACK;
+	cache_writealloc = DEFAULT_CACHE_WRITEALLOC;
+} 
+
+//called only once
 void init_vars()
 {
+
 
   c=(char**)calloc((2),sizeof(char*));
   tag=(int**)calloc((2),sizeof(int*));
@@ -100,65 +114,486 @@ void init_vars()
 
 }
 
+//u done
 void init_cache()
 {
-  init_vars();
 
-  if( cache_usize % (cache_assoc*cache_block_size)!=0)
-  {
-    fprintf(stderr,"Error - cache_size is not divisible by assocciativity*block_size\n");
-    fflush(stderr);exit(-1);
-  }
+	if( cache_usize % (cache_assoc*cache_block_size)!=0)
+	{
+		fprintf(stderr,"Error - cache_size is not divisible by assocciativity*block_size\n");
+		fflush(stderr);
+	}
 
-  blockbits[0]=LOG2(cache_block_size);
+	if(cache_split==0)//unified cache
+	{
+		blockbits[0]=LOG2(cache_block_size);
 
-  setsize[0]=cache_assoc*cache_block_size;
-  numsets[0]=cache_usize/(setsize[0]);
-  
-  indexbits[0]=LOG2(numsets[0]);
-  tagbits[0]=32-(blockbits[0]+indexbits[0]);
+		setsize[0]=cache_assoc*cache_block_size;
+		numsets[0]=cache_usize/(setsize[0]);
 
-  // printf("%d %d %d \n",tagbits[0],indexbits[0],blockbits[0]);
+		indxbits[0]=LOG2(numsets[0]);
+		tagbits[0]=32-(blockbits[0]+indxbits[0]);
+	}
+	else if(cache_split==1)
+	{
+		//for I
+		blockbits[0]=LOG2(cache_block_size);
+
+		setsize[0]=cache_assoc*cache_block_size;
+		numsets[0]=cache_isize/(setsize[0]);
+
+		indxbits[0]=LOG2(numsets[0]);
+		tagbits[0]=32-(blockbits[0]+indxbits[0]);
+
+
+		//for D	
+		blockbits[1]=LOG2(cache_block_size);
+
+		setsize[1]=cache_assoc*cache_block_size;
+		numsets[1]=cache_dsize/(setsize[1]);
+
+		indxbits[1]=LOG2(numsets[1]);
+		tagbits[1]=32-(blockbits[1]+indxbits[1]);
+
+
+	}
+
+  // printf("%d %d %d \n",tagbits[u],indxbits[u],blockbits[u]);
 }
 /************************************************************/
 
-/************************************************************/
-void perform_access(addr, access_type)
-  unsigned addr, access_type;
+void write_to_cache()
+{}
+
+void write_to_MM()
+{}
+
+void read_from_MM()
+{}
+
+void read_from_cache()
+{}
+
+
+
+void WB_WA(unsigned addr,unsigned access_type,int u)
 {
+	// v[i] and tag[i] are valid only for i which are multiples of cache_block_size 
+	int hit=0;
+	for(int i=(indx+1)*setsize[u] ; i<end ; i+=cache_block_size)
+	{
+		if(v[u][i]==true && tag[u][i]==atag)//hit
+		{
+			hit=1;
 
-  ++curr[0];
+			if(access_type==0)// d rd hit
+			{
+			//read from c[u][i+bo];=read_from_cache(u,i+bo);
+			}
+			else if(access_type==1)// d wr hit 
+			{
+			//write in c[u][i+bo];write_to_cache(u,i+bo,data);
+			//if(cache_writeback==1)
+			{dirty[u][i]=true;}
 
-  // printf("5\n");fflush(stdout);  
+			}
+			else if(access_type==2)// i rd hit 
+			{
+			//read from [i+bo]
+			int mem=c[u][i+bo];
+			mem=mem+1;
 
-  unsigned t1=(addr<<tagbits[0]);
-  t1=(t1>>(tagbits[0]+blockbits[0]));
-  unsigned index=t1;
+			}
 
-  // printf("6\n");fflush(stdout);  
-
-  unsigned t2=(addr<<(tagbits[0]+indexbits[0]));
-  t2=(t2>>(tagbits[0]+indexbits[0]));
-  unsigned bo=t2;
-
-  // printf("7\n");fflush(stdout);  
-
-  unsigned atag=(addr>>(indexbits[0]+blockbits[0]));
-
-
-  unsigned i=0,end=(index+2)*setsize[0],hit=0;
-  
-
-  if(access_type==0 || access_type==1)
-  {++numdref;}
-  else if(access_type==2)
-  {++numiref;}
+			break;//have found the memory location
+		}
+	}
 
 
-  // v[i] and tag[i] are valid only for i which are multiples of cache_block_size 
-  for(i=(index+1)*setsize[0] ; i<end ; i+=cache_block_size)
+  if(hit==0)//miss
   {
-    if(v[0][i]==true && tag[0][i]==atag)//hit
+
+    //choose which block to remove
+    unsigned minlru=curr[u]+10,mini=0;
+    for(int i=(indx+1)*setsize[u] ; i<end ; i+=cache_block_size)
+    {
+      if(lru[u][i]<minlru)
+      {minlru=lru[u][i];mini=i;}
+    }
+
+
+      if(v[u][mini]==true)
+      {    
+
+        if(access_type==0 || access_type==1)
+        {++numdreplace;}
+        else if(access_type==2)
+        {++numireplace;}     
+      }  
+
+    //write to main memory the block from [mini] to [mini+cache_block_size-1]        
+    {
+      if(dirty[u][mini]==true)
+      {
+        //block has to be written to MM
+
+
+
+        if(access_type==0 || access_type==1)
+        {copies_back[u]+=words_per_block;}
+        else if(access_type==2)
+        {copies_back[u]+=words_per_block;}     
+
+
+        for(int i=mini ; i<(mini+cache_block_size) ; ++i)
+        {
+          //mem=
+        } 
+
+      }
+
+    }
+
+    //write the block to cache from main memory
+    {
+      for(int i=mini ; i<(mini+cache_block_size) ; ++i)
+      {c[u][i]=1;/*from memory*/
+
+      tag[u][i]=atag;
+      v[u][i]=true;
+	//      dirty[u][i]=true;
+      lru[u][i]=curr[u];}
+
+      if(access_type==0 || access_type==1)
+      {demand_fetches[1]+=words_per_block;}
+      else if(access_type==2)
+      {demand_fetches[u]+=words_per_block;}
+
+    }
+
+
+      if(access_type==0)// d rd miss
+      {
+
+        //read from [mini+bo]
+        ++numdmiss;
+        dirty[u][mini]=false;
+
+        v[u][mini]=true;
+
+      }
+      else if(access_type==1)// d wr miss 
+      {
+
+        //if(cache_writeback==1)
+        {dirty[u][mini]=true;}
+        
+        v[u][mini]=true;
+        //write to cache at [mini+bo]
+        
+        ++numdmiss;
+      }
+      else if(access_type==2)// i rd miss
+      {
+
+        //read from [mini+bo]
+        ++numimiss;
+        dirty[u][mini]=false;
+
+        v[u][mini]=true;
+
+      }
+
+
+
+	}
+
+}
+
+void WB_WNA(unsigned addr,unsigned access_type,int u)
+{
+	// v[i] and tag[i] are valid only for i which are multiples of cache_block_size 
+	int hit=0;
+  for(int i=(indx+1)*setsize[u] ; i<end ; i+=cache_block_size)
+  {
+    if(v[u][i]==true && tag[u][i]==atag)//hit
+    {
+      hit=1;
+      
+      if(access_type==0)// d rd hit
+      {
+        //read from [i+bo]
+      }
+      else if(access_type==1)// d wr hit 
+      {
+        //write in c[i+bo]
+
+        {dirty[u][i]=true;}
+
+      }
+      else if(access_type==2)// i rd hit 
+      {
+        //read from [i+bo]
+        int mem=c[u][i+bo];
+        mem=mem+1;
+
+      }
+
+        break;//have found the memory location
+    }
+  }
+
+
+  if(hit==0)//miss
+  {
+
+    //choose which block to remove
+    unsigned minlru=curr[u]+10,mini=0;
+    for(int i=(indx+1)*setsize[u] ; i<end ; i+=cache_block_size)
+    {
+      if(lru[u][i]<minlru)
+      {minlru=lru[u][i];mini=i;}
+    }
+
+
+      if(v[u][mini]==true)
+      {    
+
+        if(access_type==0 /*|| access_type==1*/)
+        {++numdreplace;}
+        else if(access_type==2)
+        {++numireplace;}     
+      }  
+
+
+      if(access_type==0 || access_type==2)
+      {
+    //write to main memory the block from [mini] to [mini+cache_block_size-1]        
+    {
+      if(dirty[u][mini]==true)
+      {
+        //block has to be written to MM
+
+
+
+        if(access_type==0 /*|| access_type==1*/)
+        {copies_back[u]+=words_per_block;}
+        else if(access_type==2)
+        {copies_back[u]+=words_per_block;}     
+
+
+        for(int i=mini ; i<(mini+cache_block_size) ; ++i)
+        {
+          //mem=
+        } 
+
+      }
+
+    }
+
+    //write the block to cache from main memory
+    {
+      for(int i=mini ; i<(mini+cache_block_size) ; ++i)
+      {c[u][i]=1;/*=from memory*/
+
+      tag[u][i]=atag;
+      v[u][i]=true;
+	//      dirty[u][i]=true;
+      lru[u][i]=curr[u];}
+
+      if(access_type==0 || access_type==1)
+      {demand_fetches[u]+=words_per_block;}
+      else if(access_type==2)
+      {demand_fetches[u]+=words_per_block;}
+
+    }
+
+	}
+
+      if(access_type==0)// d rd miss
+      {
+
+        //read from [mini+bo]
+        ++numdmiss;
+        dirty[u][mini]=false;
+
+        v[u][mini]=true;
+
+      }
+      else if(access_type==1)// d wr miss 
+      {
+
+        //write to MM
+        copies_back[u]+=1;
+
+        ++numdmiss;
+      }
+      else if(access_type==2)// i rd miss
+      {
+
+        //read from [mini+bo]
+        ++numimiss;
+        dirty[u][mini]=false;
+
+        v[u][mini]=true;
+
+      }
+
+
+
+  }
+
+}
+
+void WT_WA(unsigned addr,unsigned access_type,int u)
+{
+	// v[i] and tag[i] are valid only for i which are multiples of cache_block_size 
+	int hit=0;
+  for(int i=(indx+1)*setsize[u] ; i<end ; i+=cache_block_size)
+  {
+    if(v[u][i]==true && tag[u][i]==atag)//hit
+    {
+      hit=1;
+      
+      if(access_type==0)// d rd hit
+      {
+        //read from c[u][i+bo];read_from_cache(u,i+bo);
+
+      }
+      else if(access_type==1)// d wr hit 
+      {
+        //write in c[u][i+bo];write_to_cache(u,i+bo,data);
+		//write and also in MM;write_to_MM(addr,data);
+
+        {dirty[u][i]=false;}
+        copies_back[u]+=1;
+
+      }
+      else if(access_type==2)// i rd hit 
+      {
+        //read from c[u][i+bo];read_from_cache(u,i+bo);
+        int mem=c[u][i+bo];
+        mem=mem+1;
+
+      }
+
+        break;//have found the memory location
+    }
+  }
+
+
+  if(hit==0)//miss
+  {
+
+    //choose which block to remove
+    unsigned minlru=curr[u]+10,mini=0;
+    for(int i=(indx+1)*setsize[u] ; i<end ; i+=cache_block_size)
+    {
+      if(lru[u][i]<minlru)
+      {minlru=lru[u][i];mini=i;}
+    }
+
+
+      if(v[u][mini]==true)
+      {    
+
+        if(access_type==0 || access_type==1)
+        {++numdreplace;}
+        else if(access_type==2)
+        {++numireplace;}     
+      }  
+
+    //write to main memory the block from [mini] to [mini+cache_block_size-1]        
+    /*{
+      if(dirty[u][mini]==true && access_type==1)
+      {
+        //block has to be written to MM
+
+
+
+        if(access_type==0 || access_type==1)
+        {copies_back[u]+=words_per_block;}
+        else if(access_type==2)
+        {copies_back[u]+=words_per_block;}     
+
+
+        for(int i=mini ; i<(mini+cache_block_size) ; ++i)
+        {
+          //mem=;write_to_MM();
+        } 
+
+      }
+
+    }*/
+
+    //write the block to cache from main memory
+    {
+      for(int i=mini ; i<(mini+cache_block_size) ; ++i)
+      {c[u][i]=1;//read_from_MM(addr);
+
+      tag[u][i]=atag;
+      v[u][i]=true;
+	//      dirty[u][i]=true;
+      lru[u][i]=curr[u];}
+
+      if(access_type==0 || access_type==1)
+      {demand_fetches[u]+=words_per_block;}
+      else if(access_type==2)
+      {demand_fetches[u]+=words_per_block;}
+
+    }
+
+
+      if(access_type==0)// d rd miss
+      {
+
+        //read from c[mini+bo];read_from_cache();
+        
+        ++numdmiss;
+        dirty[u][mini]=false;
+
+        v[u][mini]=true;
+
+      }
+      else if(access_type==1)// d wr miss 
+      {
+
+        //write byte to cache at [mini+bo];write_to_cache(mini+bo,data);
+        //write byte also to MM;write_to_MM(addr,data);
+
+        {dirty[u][mini]=false;}
+        
+        copies_back[u]+=1;
+        //demand_fetches[u]+=1;
+
+        v[u][mini]=true;
+        
+        ++numdmiss;
+      }
+      else if(access_type==2)// i rd miss
+      {
+
+        //read from [mini+bo]
+        ++numimiss;
+        dirty[u][mini]=false;
+
+        v[u][mini]=true;
+
+      }
+
+
+
+  }
+
+}
+
+void WT_WNA(unsigned addr,unsigned access_type,int u)
+{
+	// v[i] and tag[i] are valid only for i which are multiples of cache_block_size 
+	int hit=0;
+  for(int i=(indx+1)*setsize[u] ; i<end ; i+=cache_block_size)
+  {
+    if(v[u][i]==true && tag[u][i]==atag)//hit
     {
       hit=1;
       
@@ -170,13 +605,13 @@ void perform_access(addr, access_type)
       {
         //write in c[i+bo]
         //if(cache_writeback==1)
-        {dirty[0][i]=true;}
+        {dirty[u][i]=true;}
 
       }
       else if(access_type==2)// i rd hit 
       {
         //read from [i+bo]
-        int mem=c[0][i+bo];
+        int mem=c[u][i+bo];
         mem=mem+1;
 
       }
@@ -185,18 +620,20 @@ void perform_access(addr, access_type)
     }
   }
 
+
   if(hit==0)//miss
   {
 
     //choose which block to remove
-    unsigned minlru=curr[0]+10,mini=0;
-    for(i=(index+1)*setsize[0] ; i<end ; i+=cache_block_size)
+    unsigned minlru=curr[u]+10,mini=0;
+    for(int i=(indx+1)*setsize[u] ; i<end ; i+=cache_block_size)
     {
-      if(lru[0][i]<minlru)
-      {minlru=lru[0][i];mini=i;}
+      if(lru[u][i]<minlru)
+      {minlru=lru[u][i];mini=i;}
     }
 
-      if(v[0][mini]==true)
+
+      if(v[u][mini]==true)
       {    
 
         if(access_type==0 || access_type==1)
@@ -207,7 +644,7 @@ void perform_access(addr, access_type)
 
     //write to main memory the block from [mini] to [mini+cache_block_size-1]        
     {
-      if(dirty[0][mini]==true)
+      if(dirty[u][mini]==true)
       {
         //block has to be written to MM
 
@@ -216,10 +653,10 @@ void perform_access(addr, access_type)
         if(access_type==0 || access_type==1)
         {copies_back[1]+=words_per_block;}
         else if(access_type==2)
-        {copies_back[0]+=words_per_block;}     
+        {copies_back[u]+=words_per_block;}     
 
 
-        for(i=mini ; i<(mini+cache_block_size) ; ++i)
+        for(int i=mini ; i<(mini+cache_block_size) ; ++i)
         {
           //mem=
         } 
@@ -230,18 +667,18 @@ void perform_access(addr, access_type)
 
     //write the block to cache from main memory
     {
-      for(i=mini ; i<(mini+cache_block_size) ; ++i)
-      {c[0][i]=1;/*from memory*/
+      for(int i=mini ; i<(mini+cache_block_size) ; ++i)
+      {c[u][i]=1;/*from memory*/
 
-      tag[0][i]=atag;
-      v[0][i]=true;
-//      dirty[0][i]=true;
-      lru[0][i]=curr[0];}
+      tag[u][i]=atag;
+      v[u][i]=true;
+	//      dirty[u][i]=true;
+      lru[u][i]=curr[u];}
 
       if(access_type==0 || access_type==1)
       {demand_fetches[1]+=words_per_block;}
       else if(access_type==2)
-      {demand_fetches[0]+=words_per_block;}
+      {demand_fetches[u]+=words_per_block;}
 
     }
 
@@ -251,18 +688,18 @@ void perform_access(addr, access_type)
 
         //read from [mini+bo]
         ++numdmiss;
-        dirty[0][mini]=false;
+        dirty[u][mini]=false;
 
-        v[0][mini]=true;
+        v[u][mini]=true;
 
       }
       else if(access_type==1)// d wr miss 
       {
 
         //if(cache_writeback==1)
-        {dirty[0][mini]=true;}
+        {dirty[u][mini]=true;}
         
-        v[0][mini]=true;
+        v[u][mini]=true;
         //write to cache at [mini+bo]
         
         ++numdmiss;
@@ -272,9 +709,9 @@ void perform_access(addr, access_type)
 
         //read from [mini+bo]
         ++numimiss;
-        dirty[0][mini]=false;
+        dirty[u][mini]=false;
 
-        v[0][mini]=true;
+        v[u][mini]=true;
 
       }
 
@@ -285,15 +722,204 @@ void perform_access(addr, access_type)
 }
 
 /************************************************************/
+//I is 0 and D is 1
+//Instruction is 0 and Data is 1
+//0 is also for unified cache
+void perform_access(unsigned addr,unsigned access_type)
+{
+	int u=0;
+	if(cache_split==1)
+	{
+
+		if(access_type==2)//instruction
+		{u=0;}		
+		else if(access_type==0 || access_type==1)//data
+		{u=1;}
+
+	}
+	else if(cache_split==0)
+	{u=0;}
+
+
+  ++curr[u];
+
+
+  t1=(addr<<tagbits[u]);
+  t1=(t1>>(tagbits[u]+blockbits[u]));
+  indx=t1;//indx of the set
+
+
+  t2=(addr<<(tagbits[u]+indxbits[u]));
+  t2=(t2>>(tagbits[u]+indxbits[u]));
+  bo=t2;//block offset
+
+
+  atag=(addr>>(indxbits[u]+blockbits[u]));
+
+
+  end=(indx+2)*setsize[u];
+  
+
+  if(access_type==0 || access_type==1)
+  {++numdref;}
+  else if(access_type==2)
+  {++numiref;}
+
+	
+	//fprintf(stderr,"copies_back[%d]=%d\n",u,copies_back[u]);
+
+	if(cache_writeback==1 && cache_writealloc==1)
+	{WB_WA(addr,access_type,u);}
+	else if(cache_writeback==1 && cache_writealloc==0)
+	{WB_WNA(addr,access_type,u);}
+	else if(cache_writeback==0 && cache_writealloc==1)
+	{WT_WA(addr,access_type,u);}
+	else if(cache_writeback==0 && cache_writealloc==0)
+	{WT_WNA(addr,access_type,u);}
+
+	
+
+//   // v[i] and tag[i] are valid only for i which are multiples of cache_block_size 
+//   for(i=(indx+1)*setsize[u] ; i<end ; i+=cache_block_size)
+//   {
+//     if(v[u][i]==true && tag[u][i]==atag)//hit
+//     {
+//       hit=1;
+      
+//       if(access_type==0)// d rd hit
+//       {
+//         //read from [i+bo]
+//       }
+//       else if(access_type==1)// d wr hit 
+//       {
+//         //write in c[i+bo]
+//         //if(cache_writeback==1)
+//         {dirty[u][i]=true;}
+
+//       }
+//       else if(access_type==2)// i rd hit 
+//       {
+//         //read from [i+bo]
+//         int mem=c[u][i+bo];
+//         mem=mem+1;
+
+//       }
+
+//         break;//have found the memory location
+//     }
+//   }
+
+
+//   if(hit==0)//miss
+//   {
+
+//     //choose which block to remove
+//     unsigned minlru=curr[u]+10,mini=0;
+//     for(i=(indx+1)*setsize[u] ; i<end ; i+=cache_block_size)
+//     {
+//       if(lru[u][i]<minlru)
+//       {minlru=lru[u][i];mini=i;}
+//     }
+
+
+//       if(v[u][mini]==true)
+//       {    
+
+//         if(access_type==0 || access_type==1)
+//         {++numdreplace;}
+//         else if(access_type==2)
+//         {++numireplace;}     
+//       }  
+
+//     //write to main memory the block from [mini] to [mini+cache_block_size-1]        
+//     {
+//       if(dirty[u][mini]==true)
+//       {
+//         //block has to be written to MM
+
+
+
+//         if(access_type==0 || access_type==1)
+//         {copies_back[1]+=words_per_block;}
+//         else if(access_type==2)
+//         {copies_back[u]+=words_per_block;}     
+
+
+//         for(i=mini ; i<(mini+cache_block_size) ; ++i)
+//         {
+//           //mem=
+//         } 
+
+//       }
+
+//     }
+
+//     //write the block to cache from main memory
+//     {
+//       for(i=mini ; i<(mini+cache_block_size) ; ++i)
+//       {c[u][i]=1;/*from memory*/
+
+//       tag[u][i]=atag;
+//       v[u][i]=true;
+// //      dirty[u][i]=true;
+//       lru[u][i]=curr[u];}
+
+//       if(access_type==0 || access_type==1)
+//       {demand_fetches[1]+=words_per_block;}
+//       else if(access_type==2)
+//       {demand_fetches[u]+=words_per_block;}
+
+//     }
+
+
+//       if(access_type==0)// d rd miss
+//       {
+
+//         //read from [mini+bo]
+//         ++numdmiss;
+//         dirty[u][mini]=false;
+
+//         v[u][mini]=true;
+
+//       }
+//       else if(access_type==1)// d wr miss 
+//       {
+
+//         //if(cache_writeback==1)
+//         {dirty[u][mini]=true;}
+        
+//         v[u][mini]=true;
+//         //write to cache at [mini+bo]
+        
+//         ++numdmiss;
+//       }
+//       else if(access_type==2)// i rd miss
+//       {
+
+//         //read from [mini+bo]
+//         ++numimiss;
+//         dirty[u][mini]=false;
+
+//         v[u][mini]=true;
+
+//       }
+
+
+
+//   }
+
+}
 
 /************************************************************/
-void flush()
+
+/************************************************************/
+void flush(int u)
 {
-  unsigned i=0,end=(numsets[0])*setsize[0];
+  unsigned i=0,end=(numsets[u])*setsize[u];
 
     for(i=0 ; i<end ; i+=cache_block_size)
     {
-      if(dirty[0][i]==true)
+      if(dirty[u][i]==true)
       {
         unsigned j=i;
         for(j=i ; j<(i+cache_block_size) ; ++j)
@@ -301,7 +927,7 @@ void flush()
           //mem[...]=c[j]
         }
 
-        copies_back[0]+=words_per_block;
+        copies_back[u]+=words_per_block;
       }
     }
 

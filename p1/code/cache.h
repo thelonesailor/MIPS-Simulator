@@ -32,6 +32,16 @@
 #define CACHE_PARAM_NOWRITEALLOC 8
 
 
+int cache_split;
+int cache_usize;
+int cache_isize; 
+int cache_dsize;
+int cache_block_size;
+int words_per_block;
+int cache_assoc;
+int cache_writeback;
+int cache_writealloc;
+
 /* structure definitions */
 typedef struct cache_line_ {
   unsigned tag;
@@ -67,7 +77,7 @@ int** tag;
 bool** v;
 bool** dirty;
 int** lru;
-int tagbits[2],indexbits[2],blockbits[2];//number of bits for tag,index,block offset.
+int tagbits[2],indxbits[2],blockbits[2];//number of bits for tag,index,block offset.
 int numsets[2],setsize[2];
 
 
@@ -77,11 +87,21 @@ int curr[2];
 int numireplace,numdreplace;
 int demand_fetches[2],copies_back[2];
 
+
+
+unsigned t1, indx;
+unsigned t2, bo;
+unsigned atag;
+unsigned end;
+
+
 /* function prototypes */
-void set_cache_param();
+void set_default();
+void set_cache_param(int param,int value);
+void init_vars();
 void init_cache();
-void perform_access();
-void flush();
+void perform_access(unsigned addr,unsigned access_type);
+void flush(int u);
 void delete();
 void insert();
 void dump_settings();

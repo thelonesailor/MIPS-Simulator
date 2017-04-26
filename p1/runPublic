@@ -1,15 +1,15 @@
 #!/bin/csh
 rm -f *.log
-code/sim -bs 16 -us 8192 -a 1 -wb -wa traces/public-block.trace > myoutputs/public-block1.log
-code/sim -bs 16 -us 8192 -a 1 -wb -wa traces/public-assoc.trace > myoutputs/public-assoc1.log
-code/sim -bs 16 -us 8192 -a 1 -wb -wa traces/public-write.trace > myoutputs/public-write1.log
-code/sim -bs 16 -us 8192 -a 1 -wb -wa traces/public-instr.trace > myoutputs/public-instr1.log
+code/sim -bs 16 -us 8192 -a 1 -wb -wa traces1/public-block.trace > myoutputs1/public-block1.log
+code/sim -bs 16 -us 8192 -a 1 -wb -wa traces1/public-assoc.trace > myoutputs1/public-assoc1.log
+code/sim -bs 16 -us 8192 -a 1 -wb -wa traces1/public-write.trace > myoutputs1/public-write1.log
+code/sim -bs 16 -us 8192 -a 1 -wb -wa traces1/public-instr.trace > myoutputs1/public-instr1.log
 
-code/sim -bs 16 -us 8192 -a 1 -wb -wa traces/spice10.trace > myoutputs/spice10.log
-code/sim -bs 16 -us 8192 -a 1 -wb -wa traces/spice100.trace > myoutputs/spice100.log
-code/sim -bs 16 -us 8192 -a 1 -wb -wa traces/spice1000.trace > myoutputs/spice1000.log
+code/sim -bs 16 -us 8192 -a 1 -wb -wa traces1/spice10.trace > myoutputs1/spice10.log
+code/sim -bs 16 -us 8192 -a 1 -wb -wa traces1/spice100.trace > myoutputs1/spice100.log
+code/sim -bs 16 -us 8192 -a 1 -wb -wa traces1/spice1000.trace > myoutputs1/spice1000.log
 
-code/sim -bs 16 -us 8192 -a 1 -wb -wa traces/spice.trace > myoutputs/spice.log
-code/sim -bs 16 -us 8192 -a 1 -wb -wa traces/tex.trace > myoutputs/tex.log
-code/sim -bs 16 -us 8192 -a 1 -wb -wa traces/cc.trace > myoutputs/cc1.log
+code/sim -bs 16 -us 8192 -a 1 -wb -wa traces1/spice.trace > myoutputs1/spice.log
+code/sim -bs 16 -us 8192 -a 1 -wb -wa traces1/tex.trace > myoutputs1/tex.log
+code/sim -bs 16 -us 8192 -a 1 -wb -wa traces1/cc.trace > myoutputs1/cc1.log
 

@@ -1,24 +1,53 @@
 
-
 #include <stdlib.h>
 #include <stdio.h>
 #include "cache.h"
 #include "main.h"
 
 FILE *traceFile;
+int arg_index;
 
-
-int main(argc, argv)
-  int argc;
-  char **argv;
+int main(int argc,char ** argv)
 {
-  parse_args(argc, argv);
-  // printf("1\n");fflush(stdout);
-  init_cache();
-  // printf("2\n");fflush(stdout);
-  play_trace(traceFile);
-  // printf("3\n");fflush(stdout);  
-  print_stats();
+
+  //these have to be called only once
+    set_default();
+    parse_args(argc, argv);
+    
+    init_vars();//allocate space
+    init_cache();
+      
+  
+  if(cache_split==0)//unified cache  
+  {
+    traceFile = fopen(argv[arg_index], "r");
+    if(traceFile==NULL)
+    {
+        fprintf(stderr,"Error - traceFile is NULL \"%s\"\n",argv[arg_index]);
+        fflush(stderr);
+    }
+
+    play_trace(traceFile);
+    print_stats();
+  }
+  else if(cache_split==1)//split cache
+  { 
+
+      traceFile = fopen(argv[arg_index], "r");
+      if(traceFile==NULL)
+      {
+          fprintf(stderr,"Error - traceFile is NULL \"%s\"\n",argv[arg_index]);
+          fflush(stderr);
+      }
+
+      play_trace(traceFile);
+    
+
+    print_stats();
+  }
+  else
+  {printf("Error - cache_split is=%d.\n",cache_split);}
+
 }
 
 
@@ -27,7 +56,7 @@ void parse_args(argc, argv)
   int argc;
   char **argv;
   {
-  int arg_index, i, value;
+  int i, value;
 
   if (argc < 2) {
     printf("Error - usage:  sim <options> <trace file>\n");
@@ -121,22 +150,13 @@ void parse_args(argc, argv)
 
   dump_settings();
 
-  /* open the trace file */
-  traceFile = fopen(argv[arg_index], "r");
-  // traceFile = fopen("traces/spice.trace", "r");
-  if(traceFile==NULL)
-  {
-      fprintf(stderr,"Error - traceFile is NULL \"%s\"\n",argv[arg_index]);
-      fflush(stderr);
-  }
 
   return;
 }
 /************************************************************/
 
 /************************************************************/
-void play_trace(inFile)
-  FILE *inFile;
+void play_trace(FILE * inFile)
   {
   unsigned addr, access_type;
   int num_inst;
@@ -174,7 +194,11 @@ void play_trace(inFile)
       printf("processed %d references\n", num_inst);
   }
 
-  flush();
+
+  if(cache_split==0)//unified cache  
+  {flush(0);}
+  else if(cache_split==1)//split cache  
+  {flush(0);flush(1);}
 }
 /************************************************************/
 
